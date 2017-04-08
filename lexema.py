@@ -1,0 +1,2 @@
+def lexema():
+	pass
