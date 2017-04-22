@@ -1,16 +1,28 @@
 import os
 
+from export import Export
+from file import file
+
 
 class Pythondoc():
 
 	ignore_folders = [
-		'.test',
-		'ignore'
+		'.shopperpy',
+		'.git',
+		'.env',
+		'.idea',
+		'media',
+		'logs',
+		'staticfiles',
+		'__pycache__'
 	]
 
 	def __init__(self, *args, **kwargs):
 
 		path, output, Format = args
+
+		file.exists(output)
+
 		files = []
 
 		self.findpythonfiles(path, files)
@@ -21,12 +33,9 @@ class Pythondoc():
 
 		del files, path
 
-		if not output:
-			self.retrievecomments(comments)
-		elif not Format:
-			print('Format invalid')
-		elif Format == 'html':
-			self.html(comments, output)
+		self.clearpaths(comments)
+
+		Export(comments, output, Format)
 
 
 	def findpythonfiles(self, path, python_files):
@@ -81,6 +90,7 @@ class Pythondoc():
 			f = open(file, 'r')
 
 			start = None
+			end = None
 
 			for line_number, line in enumerate(f):
 
@@ -93,7 +103,7 @@ class Pythondoc():
 					start = None
 					end = None
 
-				if '"""' in line and not start:
+				elif '"""' in line and not start:
 					start = {'line': line_number, 'pos': line.index('"""')}
 
 					if len(line)-1 > start['pos']:
@@ -126,18 +136,14 @@ class Pythondoc():
 			print(comment)
 
 
-	def html(self, comments, output):
+	def clearpaths(self, comments):
 
-		if os.path.exists(output):
+		fullpath = '/'.join(os.getcwd().split('/')) + '/'
 
-			print('File already exists')
+		for idx, comment in enumerate(comments):
 
-			return None
+			comment = comment.replace(fullpath, '')
+			comment = comment.replace('/', '.')
+			comment = comment.replace('.py', '')
 
-		f = open(output, 'w+')
-
-		for comment in comments:
-
-			f.write(comment + '\n')
-
-		f.close()
+			comments[idx] = comment

@@ -1,16 +1,86 @@
 #!/bin/bash
 
-while getopts ":d:o:f:" opt; do
-  case $opt in
-    d) directory="$OPTARG"
-    ;;
-    o) output="$OPTARG"
-    ;;
-    f) format="$OPTARG"
-    ;;
-    \?) echo "Invalid option -$OPTARG" >&2
-    ;;
-  esac
-done
+if [ "$#" == "0" ]; then
+    printf "\n=================================\n"
+    printf "=           Pythondoc           =\n"
+    printf "=================================\n\n"
+    printf "\nDescription:\n"
+    printf "\n  Pythondoc was created to make an automatic documentation of commented codes\n"
+    printf "\nUsage:\n"
+    printf "\n  pythondoc <output file name> [args] | args\n"
+    printf "\nOptions:\n"
+    printf "\n  -h      See 'pythondoc -h <option>' to get more informations about an option\n"
+    printf "\n  -f      Format of output"
+    printf "\n  -o      Output file name"
+    printf "\n  -d      Path of directory which will be verified"
+    printf "\n\n"
+    exit 1
+fi
 
-python $PYTHONDOC_ROOT/main.py $directory $output $format
+if [ $# -ge 1 ]; then
+
+    while getopts ":d:o:f:h:" opt; do
+        case $opt in
+            d) directory="d:$OPTARG"
+            ;;
+            o) output="o:$OPTARG"
+            ;;
+            f) format="f:$OPTARG"
+            ;;
+            h) helpOption="$OPTARG"
+            ;;
+            \?) echo "Invalid option -$OPTARG"
+                echo "Exiting program."
+                exit 1
+            ;;
+        esac
+    done
+
+    if [ "$helpOption" != "" ]; then
+        case $helpOption in
+            d) echo "'pythondoc -d <folder_of_project>' (this is optional, if not given the current directory will be used)"
+            ;;
+            o) echo "'pythondoc -o output.html <args>' or 'python output.html <args>' (It is necessary to inform an output)"
+            ;;
+            f) echo "'pythondoc -f <format_of_output>' only html (if not specified, will be html by default)"
+            ;;
+            h) echo "'pythondoc -h [d|o|f|h]"
+            ;;
+            \?) echo "Invalid option -$OPTARG"
+                echo "Exiting program."
+                exit 1
+            ;;
+        esac
+        exit 1
+    fi
+
+    if [ "$format" == "" ]; then
+        format="html"
+    fi
+
+    if [ "$directory" == "" ]; then
+        directory="$(pwd)"
+    fi
+
+    if [ "$1" != "" ] && [ "$output" == "" ] && [ "$1" != "-h" ]; then
+        output="o:$1"
+    fi
+
+    if [ -f "$(echo $output | cut -d':' -f 2)" ]; then
+        response=
+
+        echo -n "Output file exists. Overwrite? ([Y]/n) > "
+
+        read response
+
+        if [ "$response" != "Y" ] && [ "$response" != "y" ]; then
+            echo "Exiting program."
+            exit 1
+        fi
+    fi
+
+    if [ "$1" != "-h" ]; then
+        python $PYTHONDOC_ROOT/main.py $directory $output $format
+        exit 1
+    fi
+fi
